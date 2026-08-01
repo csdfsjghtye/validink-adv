@@ -975,6 +975,17 @@ export const dbService = {
 
   createBooking: async (serviceId: string, clientId: string): Promise<void> => {
     if (useRealFirebase && db) {
+      // Check if student already has an active contract in progress
+      const activeQuery = query(collection(db, 'bookings'), where('clientId', '==', clientId));
+      const activeSnap = await getDocs(activeQuery);
+      const hasActiveContract = activeSnap.docs.some(doc => {
+        const st = doc.data().status;
+        return ['pending', 'accepted', 'paid'].includes(st);
+      });
+      if (hasActiveContract) {
+        throw new Error("You already have an active validation contract in progress. Students are limited to booking one contract at a time. Please complete or settle your current contract before requesting a new one.");
+      }
+
       // We implement the transaction pattern
       await runTransaction(db, async (transaction) => {
         const srvRef = doc(db, 'services', serviceId);
@@ -986,13 +997,13 @@ export const dbService = {
         if (!srvSnap.exists()) throw new Error("Service does not exist");
         if (bookingSnap.exists()) {
           const bookingData = bookingSnap.data();
-          if (bookingData.status === 'pending' || bookingData.status === 'accepted') {
+          if (bookingData.status === 'pending' || bookingData.status === 'accepted' || bookingData.status === 'paid') {
             throw new Error("Service has already been booked or is in negotiation");
           }
         }
 
         const srvData = srvSnap.data();
-        if (srvData.status !== 'active') throw new Error("Service is no longer active");
+        if (srvData.status !== 'active') throw new Error("This service is no longer available as it has already been booked or is under review.");
         if (srvData.providerId === clientId) throw new Error("You cannot book your own service");
 
         // Execute lock atomic actions (set overwrites any previous cancelled/declined/completed booking)
@@ -1025,18 +1036,24 @@ export const dbService = {
       const bookings = getLocalJSON<Booking[]>(MOCK_BOOKINGS_KEY, []);
       const users = getLocalJSON<Record<string, UserProfile>>(MOCK_USERS_KEY, {});
 
+      // Check single active contract limit for student in local mode
+      const hasActiveContract = bookings.some(b => b.clientId === clientId && ['pending', 'accepted', 'paid'].includes(b.status));
+      if (hasActiveContract) {
+        throw new Error("You already have an active validation contract in progress. Students are limited to booking one contract at a time. Please complete or settle your current contract before requesting a new one.");
+      }
+
       const sIndex = services.findIndex(s => s.id === serviceId);
       if (sIndex === -1) throw new Error("Service not found");
       
       const srv = services[sIndex];
-      if (srv.status !== 'active') throw new Error("Service is already booked or pending");
+      if (srv.status !== 'active') throw new Error("This service is no longer available as it has already been booked or is under review.");
       if (srv.providerId === clientId) throw new Error("Cannot book your own service");
 
       // Set booking and status
       const existingIndex = bookings.findIndex(b => b.id === serviceId);
       if (existingIndex !== -1) {
         const existing = bookings[existingIndex];
-        if (existing.status === 'pending' || existing.status === 'accepted') {
+        if (existing.status === 'pending' || existing.status === 'accepted' || existing.status === 'paid') {
           throw new Error("Service has already been booked or is in negotiation");
         }
         // Remove or replace previous booking to allow fresh book
@@ -1114,10 +1131,16 @@ export const dbService = {
           finalServiceStatus = 'active';
         }
 
-        transaction.update(bookingRef, {
+        const updateData: any = {
           status: newStatus,
           updatedAt: Timestamp.now()
-        });
+        };
+
+        if (newStatus === 'paid') {
+          updateData.transactionId = bData.transactionId || `TXN-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+        }
+
+        transaction.update(bookingRef, updateData);
 
         transaction.update(srvRef, {
           status: finalServiceStatus,
@@ -1170,6 +1193,9 @@ export const dbService = {
 
         b.status = newStatus;
         b.updatedAt = new Date().toISOString();
+        if (newStatus === 'paid' && !b.transactionId) {
+          b.transactionId = `TXN-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+        }
 
         if (sIndex !== -1) {
           if (newStatus === 'accepted') {
