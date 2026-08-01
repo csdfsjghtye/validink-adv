@@ -365,10 +365,10 @@ export default function App() {
       </header>
 
       {/* Main Container */}
-      <div className="w-full max-w-5xl flex relative flex-1 overflow-hidden">
+      <div className="w-full max-w-[1400px] 2xl:max-w-full flex relative flex-1 overflow-hidden h-full">
         
         {/* Left column sidebar (sticky, hidden on smaller screens < md) */}
-        <div className="hidden md:flex flex-col h-full w-16 lg:w-64 shrink-0 relative z-30 overflow-y-auto no-scrollbar border-l border-[var(--border)]">
+        <div className="hidden md:flex flex-col h-full w-16 lg:w-64 shrink-0 relative z-30 overflow-y-auto no-scrollbar border-r border-[var(--border)]">
           <Sidebar
             currentTab={currentTab}
             setCurrentTab={handleSetTab}
@@ -387,7 +387,7 @@ export default function App() {
         </div>
 
         {/* Center Main area (feeds, bookings, message threads, profiles) */}
-        <main className="flex-1 w-full h-full md:border-r border-[var(--border)] bg-[var(--bg)] pb-20 md:pb-0 relative overflow-y-auto no-scrollbar">
+        <main className={`flex-1 w-full h-full md:border-r border-[var(--border)] bg-[var(--bg)] pb-16 md:pb-0 relative flex flex-col ${currentTab === 'messages' ? 'overflow-hidden' : 'overflow-y-auto no-scrollbar'}`}>
           <AnimatePresence mode="wait">
             <motion.div
               key={currentTab}
@@ -395,7 +395,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="w-full min-h-full flex flex-col"
+              className="w-full h-full flex flex-col flex-1 overflow-hidden"
             >
               {(currentTab === 'home' || currentTab === 'explore') && (
                 <Feed

@@ -362,12 +362,12 @@ export default function Feed({
 
         {/* Categories Pills Row (Only visible for Validation Offerings) */}
         {activeFeedTab === 'offerings' && (
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2 border-b border-transparent pr-4">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2 border-b border-transparent pr-4 w-full">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
                 onClick={() => onSelectCategory(cat)}
-                className={`px-6 py-1.5 rounded-full text-xs font-bold shrink-0 transition duration-150 select-none cursor-pointer ${
+                className={`px-5 py-1.5 rounded-full text-xs font-bold shrink-0 transition duration-150 select-none cursor-pointer ${
                   selectedCategory === cat
                     ? 'bg-[var(--accent)] text-white shadow-md'
                     : 'bg-[var(--surface)] text-[var(--text-secondary)] border border-[var(--border)] hover:bg-[var(--border)]'
@@ -376,6 +376,7 @@ export default function Feed({
                 {cat}
               </button>
             ))}
+            <div className="w-8 shrink-0" />
           </div>
         )}
       </div>

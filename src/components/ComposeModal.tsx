@@ -168,7 +168,7 @@ export default function ComposeModal({ user, onClose, onSuccess }: ComposeModalP
               <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-1">
                 <Sparkles size={11} className="text-[var(--accent)]" /> Choose Category
               </label>
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 pr-4">
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 pr-4 w-full">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
@@ -183,6 +183,7 @@ export default function ComposeModal({ user, onClose, onSuccess }: ComposeModalP
                     {cat}
                   </button>
                 ))}
+                <div className="w-8 shrink-0" />
               </div>
             </div>
 

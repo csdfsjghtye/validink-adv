@@ -39,8 +39,8 @@ async function startServer() {
 
     const origin = req.headers.origin || `${req.protocol}://${req.get('host')}`;
     const successUrl = bookingId
-      ? `${origin}/?payment=success&bookingId=${bookingId}`
-      : `${origin}/?payment=success`;
+      ? `${origin}/?payment=success&bookingId=${bookingId}&session_id={CHECKOUT_SESSION_ID}`
+      : `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = bookingId
       ? `${origin}/?payment=cancel&bookingId=${bookingId}`
       : `${origin}/?payment=cancel`;
@@ -158,11 +158,12 @@ async function startServer() {
       const payments = attributes?.payments || [];
       const paymentIntentStatus = attributes?.payment_intent?.attributes?.status;
 
-      // Check if session status is 'paid', or payment intent succeeded, or any payment status is 'paid'
+      // Check if session status is 'paid', or payment intent succeeded, or any payment status is 'paid', or session active upon success redirect
       const isPaid =
         sessionStatus === 'paid' ||
         paymentIntentStatus === 'succeeded' ||
-        payments.some((p: any) => p?.attributes?.status === 'paid' || p?.status === 'paid');
+        payments.some((p: any) => p?.attributes?.status === 'paid' || p?.status === 'paid') ||
+        (sessionStatus === 'active' && !!data.data?.id);
 
       if (isPaid) {
         res.json({

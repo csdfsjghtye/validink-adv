@@ -244,15 +244,15 @@ export default function Messages({
   }
 
   return (
-    <div className="flex h-full border-r border-[var(--border)] bg-[var(--bg)] text-[var(--text-primary)]">
+    <div className="flex h-full w-full bg-[var(--bg)] text-[var(--text-primary)] overflow-hidden">
       
       {/* 1. Conversations Sidebar list panel */}
-      <div className={`w-full md:w-80 shrink-0 border-r border-[var(--border)] flex flex-col h-full ${activeConvId ? 'hidden md:flex' : 'flex'}`}>
-        <div className="px-4 py-4 border-b border-[var(--border)] flex items-center justify-between">
+      <div className={`w-full md:w-80 shrink-0 border-r border-[var(--border)] flex flex-col h-full overflow-hidden ${activeConvId ? 'hidden md:flex' : 'flex'}`}>
+        <div className="px-4 py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0">
           <h1 className="font-black text-lg tracking-tight">Messages</h1>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1">
+        <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1 min-h-0">
           {loading ? (
             <div className="flex items-center justify-center py-12 text-xs text-[var(--text-secondary)] font-bold">
               Loading conversations...
@@ -304,11 +304,11 @@ export default function Messages({
       </div>
 
       {/* 2. Chat Box Thread panel */}
-      <div className={`flex-1 flex flex-col h-full bg-[var(--bg)] ${!activeConvId ? 'hidden md:flex items-center justify-center text-[var(--text-secondary)]' : 'flex'}`}>
+      <div className={`flex-1 flex flex-col h-full bg-[var(--bg)] overflow-hidden ${!activeConvId ? 'hidden md:flex items-center justify-center text-[var(--text-secondary)]' : 'flex'}`}>
         {activeConvId && activePartner ? (
-          <>
+          <div className="flex flex-col h-full w-full justify-between overflow-hidden">
             {/* Thread Header */}
-            <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-3">
+            <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-3 shrink-0">
               <button
                 onClick={() => setActiveConvId(null)}
                 className="p-1.5 hover:bg-[var(--surface)] rounded-full transition md:hidden cursor-pointer text-[var(--text-primary)]"
@@ -344,7 +344,7 @@ export default function Messages({
             </div>
 
             {/* Message Bubble Scrolls */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2.5">
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2.5 min-h-0">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center text-center py-16 gap-1 text-[var(--text-secondary)]">
                   <span className="text-sm font-bold">This is the start of your message history</span>
@@ -379,7 +379,7 @@ export default function Messages({
             </div>
 
             {/* Chat Input form */}
-            <form onSubmit={handleSendMessage} className="p-3 border-t border-[var(--border)] bg-[var(--bg)] flex flex-col items-center gap-2">
+            <form onSubmit={handleSendMessage} className="p-3 border-t border-[var(--border)] bg-[var(--bg)] flex flex-col items-center gap-2 shrink-0">
               {!canMessage && (
                 <div className="w-full p-2 text-center text-[10px] font-bold text-amber-600 bg-amber-500/10 rounded-md">
                   Messages locked. You must have a paid validation contract with this expert to message them.
@@ -404,7 +404,7 @@ export default function Messages({
                 </button>
               </div>
             </form>
-          </>
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full p-4 gap-2 text-[var(--text-secondary)]">
             <MessageSquare size={32} />
