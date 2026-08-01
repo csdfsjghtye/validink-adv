@@ -1,0 +1,8 @@
+{
+  "name": "Validink Latest",
+  "description": "Fetches and executes the ValidInk program to provide automated link and data validation services.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

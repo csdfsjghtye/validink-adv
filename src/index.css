@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+:root {
+  /* Default: Light theme values matching ValidInk logo */
+  --bg: #FAF9F5;
+  --surface: #F3EFE6;
+  --border: #E6DFD3;
+  --text-primary: #17253D;
+  --text-secondary: #5A677B;
+  --accent: #8B1E2F;
+  --accent-hover: #731321;
+  --validated: #8B1E2F;
+  --danger: #DC2626;
+  --success: #15803D;
+  
+  --radius-pill: 9999px;
+  --radius-modal: 16px;
+  --radius-input: 12px;
+}
+
+[data-theme="dim"] {
+  /* Dim brand theme */
+  --bg: #111C2B;
+  --surface: #1B2A3E;
+  --border: #2A3B52;
+  --text-primary: #F3F6FA;
+  --text-secondary: #8C9CB0;
+  --accent: #D44A5C;
+  --accent-hover: #C23648;
+  --validated: #38BDF8;
+  --danger: #F87171;
+  --success: #4ADE80;
+}
+
+[data-theme="lightsout"] {
+  /* Lights out deep ink theme */
+  --bg: #080F1A;
+  --surface: #111926;
+  --border: #1E293B;
+  --text-primary: #FFFFFF;
+  --text-secondary: #8293A6;
+  --accent: #E05A6D;
+  --accent-hover: #C94356;
+  --validated: #0284C7;
+  --danger: #F87171;
+  --success: #4ADE80;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Shimmer/Skeleton animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--border) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* Utility to hide scrollbar but allow scrolling */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Base custom classes to bridge theme variables with Tailwind classes */
+.theme-bg { background-color: var(--bg); }
+.theme-surface { background-color: var(--surface); }
+.theme-border { border-color: var(--border); }
+.theme-text { color: var(--text-primary); }
+.theme-text-muted { color: var(--text-secondary); }
+.theme-accent { color: var(--accent); }
+.theme-accent-bg { background-color: var(--accent); }
+.theme-validated { color: var(--validated); }
+.theme-validated-border { border-color: var(--validated); }
+
+/* Sticky feed header */
+.feed-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(12px);
+  background-color: rgba(var(--bg), 0.85);
+  border-bottom: 1px solid var(--border);
+}

@@ -1,0 +1,137 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helpers ----------
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+
+    function isFullyRegistered() {
+      return isSignedIn();
+    }
+
+    function isValidString(val, maxLen) {
+      return val is string && val.size() > 0 && val.size() <= maxLen;
+    }
+
+    // ---------- users ----------
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId)
+                    && request.resource.data.profileComplete == false;
+      allow update: if isOwner(userId)
+                    && request.resource.data.createdAt == resource.data.createdAt
+                    && (request.resource.data.profileComplete == false ||
+                        (isValidString(request.resource.data.displayName, 50) &&
+                         isValidString(request.resource.data.bio, 160) &&
+                         isValidString(request.resource.data.title, 60)));
+
+      match /achievements/{achievementId} {
+        allow read: if isSignedIn();
+        allow write: if isOwner(userId);
+      }
+
+      match /notifications/{notifId} {
+        allow create: if isFullyRegistered()
+                      && request.resource.data.type in
+                         ['new_message','booking_request','booking_accepted',
+                          'booking_declined','review_received','achievement_validated'];
+        allow read, update, delete: if isOwner(userId);
+      }
+
+      match /blocks/{blockedUid} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    match /handles/{handle} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow update: if false; // change handle = delete + create
+    }
+
+    // ---------- services ----------
+    match /services/{serviceId} {
+      allow read: if true;
+      allow create: if isFullyRegistered()
+                    && request.resource.data.providerId == request.auth.uid
+                    && request.resource.data.status == 'active'
+                    && isValidString(request.resource.data.title, 100)
+                    && isValidString(request.resource.data.description, 500)
+                    && request.resource.data.price is number
+                    && request.resource.data.price > 0;
+
+      allow update: if isSignedIn() && (
+                    (request.auth.uid == resource.data.providerId && isValidServiceTransition(resource.data.status, request.resource.data.status))
+                    ||
+                    (resource.data.status == 'active' && request.resource.data.status == 'pending' && request.auth.uid != resource.data.providerId
+                     && request.resource.data.title == resource.data.title
+                     && request.resource.data.price == resource.data.price
+                     && request.resource.data.description == resource.data.description
+                     && request.resource.data.category == resource.data.category
+                     && request.resource.data.providerId == resource.data.providerId)
+                    );
+
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.providerId
+                    && resource.data.status == 'active';
+
+      function isValidServiceTransition(oldStatus, newStatus) {
+        return (newStatus == 'archived') ||
+               (oldStatus == 'active'    && newStatus in ['active','pending','archived']) ||
+               (oldStatus == 'pending'   && newStatus in ['pending','active','booked']) ||
+               (oldStatus == 'booked'    && newStatus in ['booked','completed','active']) ||
+               (oldStatus == 'completed' && newStatus == 'completed');
+      }
+    }
+
+    // ---------- conversations ----------
+    match /conversations/{convId} {
+      allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow create: if isFullyRegistered() && request.auth.uid in request.resource.data.participants;
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants
+                    && request.resource.data.participants == resource.data.participants;
+
+      match /messages/{msgId} {
+        allow read, create: if isFullyRegistered() &&
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+        allow update, delete: if false; // messages are immutable once sent
+      }
+    }
+
+    // ---------- bookings ----------
+    match /bookings/{bookingId} {
+      allow create: if isSignedIn()
+                    && request.resource.data.clientId == request.auth.uid
+                    && request.resource.data.status == 'pending';
+
+      allow read: if isSignedIn() &&
+                  (request.auth.uid == resource.data.clientId ||
+                   request.auth.uid == resource.data.providerId);
+
+      allow update: if isSignedIn() && (
+                    request.auth.uid == resource.data.clientId ||
+                    request.auth.uid == resource.data.providerId
+                  );
+    }
+
+    // ---------- reviews ----------
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && reviewId == request.resource.data.bookingId
+                    && request.resource.data.authorId == request.auth.uid
+                    && request.resource.data.rating is number
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5
+                    && isValidString(request.resource.data.comment, 280);
+      allow update, delete: if false;
+    }
+
+    // ---------- reports ----------
+    match /reports/{reportId} {
+      allow create: if isFullyRegistered() && request.resource.data.reporterId == request.auth.uid;
+      allow read, update, delete: if false; // admin only
+    }
+  }
+}
