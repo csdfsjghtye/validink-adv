@@ -246,7 +246,7 @@ export default function Bookings({
   }
 
   return (
-    <div className="flex flex-col h-full border-r border-[var(--border)] bg-[var(--bg)] text-[var(--text-primary)]">
+    <div className="flex flex-col min-h-full w-full border-r border-[var(--border)] bg-[var(--bg)] text-[var(--text-primary)] pb-24 md:pb-12">
       
       {/* Header */}
       <div className="px-4 py-4 border-b border-[var(--border)] sticky top-0 bg-[var(--bg)]/90 backdrop-blur-md z-20">
@@ -380,15 +380,8 @@ export default function Bookings({
                   {activeTab === 'client' && b.status === 'paid' && (
                     <div className="p-3 bg-indigo-50 border border-indigo-200/80 rounded-xl text-xs text-indigo-900 flex items-start gap-2 font-medium">
                       <CreditCard size={16} className="text-indigo-600 shrink-0 mt-0.5" />
-                      <div className="flex flex-col gap-1 w-full">
-                        <div className="flex items-center justify-between">
-                          <span className="font-extrabold text-indigo-950">Payment Confirmed (PayMongo)</span>
-                          {b.transactionId && (
-                            <span className="text-[10px] font-mono font-black text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded border border-indigo-200">
-                              Txn ID: {b.transactionId}
-                            </span>
-                          )}
-                        </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-extrabold text-indigo-950">Payment Confirmed (PayMongo)</span>
                         <p className="text-[11px] text-indigo-800 leading-relaxed">
                           Payment verified! The professor is currently performing your academic validation audit.
                         </p>
@@ -423,15 +416,8 @@ export default function Bookings({
                   {activeTab === 'provider' && b.status === 'paid' && (
                     <div className="p-3 bg-emerald-50 border border-emerald-200/80 rounded-xl text-xs text-emerald-900 flex items-start gap-2 font-medium">
                       <CheckCircle size={16} className="text-emerald-600 shrink-0 mt-0.5" />
-                      <div className="flex flex-col gap-1 w-full">
-                        <div className="flex items-center justify-between">
-                          <span className="font-extrabold text-emerald-950">Payment Received — Active Validation</span>
-                          {b.transactionId && (
-                            <span className="text-[10px] font-mono font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200">
-                              Txn ID: {b.transactionId}
-                            </span>
-                          )}
-                        </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-extrabold text-emerald-950">Payment Received — Active Validation</span>
                         <p className="text-[11px] text-emerald-800 leading-relaxed">
                           The student has paid. Perform the validation audit and click "Complete Validation Contract" when done.
                         </p>

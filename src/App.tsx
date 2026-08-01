@@ -407,7 +407,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="w-full h-full flex flex-col flex-1 overflow-hidden"
+              className={`w-full flex flex-col flex-1 ${currentTab === 'messages' ? 'h-full overflow-hidden' : 'min-h-full'}`}
             >
               {(currentTab === 'home' || currentTab === 'explore') && (
                 <Feed

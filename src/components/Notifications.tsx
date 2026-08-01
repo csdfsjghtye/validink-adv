@@ -172,7 +172,7 @@ export default function Notifications({
   }
 
   return (
-    <div className="flex flex-col h-full border-r border-[var(--border)] bg-[var(--bg)] text-[var(--text-primary)]">
+    <div className="flex flex-col min-h-full w-full border-r border-[var(--border)] bg-[var(--bg)] text-[var(--text-primary)] pb-24 md:pb-12">
       
       {/* Header */}
       <div className="px-4 py-4 border-b border-[var(--border)] flex items-center justify-between sticky top-0 bg-[var(--bg)]/90 backdrop-blur-md z-20">

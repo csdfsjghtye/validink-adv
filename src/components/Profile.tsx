@@ -200,7 +200,7 @@ export default function Profile({
           id: d.id,
           ...d.data()
         })) as Service[];
-        const filtered = srvs.filter(s => ['active', 'pending', 'booked'].includes(s.status));
+        const filtered = srvs.filter(s => s.status === 'active');
         setServices(filtered);
       }, (err) => {
         console.error(err);
@@ -210,7 +210,7 @@ export default function Profile({
     } else {
       const loadServices = () => {
         dbService.getServicesByProvider(profileId).then(srvs => {
-          const filtered = srvs.filter(s => ['active', 'pending', 'booked'].includes(s.status));
+          const filtered = srvs.filter(s => s.status === 'active');
           setServices(filtered);
         });
       };
@@ -565,7 +565,7 @@ export default function Profile({
   }
 
   return (
-    <div className="flex flex-col h-full border-r border-[var(--border)] bg-[var(--bg)] text-[var(--text-primary)] pb-12">
+    <div className="flex flex-col min-h-full w-full border-r border-[var(--border)] bg-[var(--bg)] text-[var(--text-primary)] pb-24 md:pb-12">
       
       {/* 1. Header Hero Banner */}
       <div className="h-44 bg-[var(--surface)] relative overflow-hidden shrink-0 border-b border-[var(--border)]">

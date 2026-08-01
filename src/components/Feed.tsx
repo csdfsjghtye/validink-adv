@@ -304,7 +304,7 @@ export default function Feed({
   });
 
   return (
-    <div className="flex flex-col h-full border-r border-[var(--border)] bg-[var(--bg)] text-[var(--text-primary)] text-left">
+    <div className="flex flex-col min-h-full w-full border-r border-[var(--border)] bg-[var(--bg)] text-[var(--text-primary)] text-left pb-24 md:pb-12">
       
       {/* Sticky Category Top Nav Bar */}
       <div className="sticky top-0 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)] z-20 px-4 py-3 flex flex-col gap-3">
@@ -537,7 +537,7 @@ export default function Feed({
                 </article>
               ))}
 
-              {filteredServices.filter(s => s.status === 'active' || s.status === 'pending').map((service) => {
+              {filteredServices.filter(s => s.status === 'active').map((service) => {
                 const providerUser = users.find(u => u.uid === service.providerId);
                 const isProfessor = providerUser?.role === 'professor';
 
