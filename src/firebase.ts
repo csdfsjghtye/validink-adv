@@ -1152,6 +1152,12 @@ export const dbService = {
       const bSnap = await getDoc(doc(db, 'bookings', bookingId));
       if (bSnap.exists()) {
         const b = bSnap.data();
+        
+        if (newStatus === 'paid' || newStatus === 'completed') {
+          const convId = await dbService.getOrCreateConversation(b.clientId, b.providerId);
+          await updateDoc(doc(db, 'conversations', convId), { status: 'unlocked' });
+        }
+
         if (newStatus === 'accepted') {
           await dbService.createNotification(b.clientId, 'booking_accepted', { bookingId, serviceId: b.serviceId });
         } else if (newStatus === 'declined') {
@@ -1212,6 +1218,16 @@ export const dbService = {
 
         setLocalJSON(MOCK_BOOKINGS_KEY, bookings);
         setLocalJSON(MOCK_SERVICES_KEY, services);
+
+        if (newStatus === 'paid' || newStatus === 'completed') {
+          const convId = await dbService.getOrCreateConversation(b.clientId, b.providerId);
+          const convs = getLocalJSON<Conversation[]>(MOCK_CONVERSATIONS_KEY, []);
+          const conv = convs.find(c => c.id === convId);
+          if (conv) {
+            conv.status = 'unlocked';
+            setLocalJSON(MOCK_CONVERSATIONS_KEY, convs);
+          }
+        }
 
         // Notify
         if (newStatus === 'accepted') {

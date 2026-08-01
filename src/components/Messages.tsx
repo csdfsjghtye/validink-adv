@@ -160,66 +160,8 @@ export default function Messages({
       return;
     }
 
-    let unsub = () => {};
-
-    if (db) {
-      const qClient = query(
-        collection(db, 'bookings'),
-        where('clientId', '==', currentUserProfile.uid),
-        where('providerId', '==', activePartnerId)
-      );
-      const qProvider = query(
-        collection(db, 'bookings'),
-        where('providerId', '==', currentUserProfile.uid),
-        where('clientId', '==', activePartnerId)
-      );
-
-      let clientDocs: any[] = [];
-      let providerDocs: any[] = [];
-
-      const evaluate = () => {
-        const cPaid = clientDocs.some(d => ['paid', 'completed'].includes(d.data()?.status));
-        const pPaid = providerDocs.some(d => ['paid', 'completed'].includes(d.data()?.status));
-        setCanMessage(cPaid || pPaid);
-      };
-
-      const unsub1 = onSnapshot(qClient, (snap) => {
-        clientDocs = snap.docs;
-        evaluate();
-      }, (err) => {
-        console.error("qClient snapshot error", err);
-      });
-
-      const unsub2 = onSnapshot(qProvider, (snap) => {
-        providerDocs = snap.docs;
-        evaluate();
-      }, (err) => {
-        console.error("qProvider snapshot error", err);
-      });
-
-      unsub = () => {
-        unsub1();
-        unsub2();
-      };
-    } else {
-      const checkSimulated = async () => {
-        try {
-          const clientBookings = await dbService.getBookings(currentUserProfile.uid, false);
-          const providerBookings = await dbService.getBookings(currentUserProfile.uid, true);
-
-          const hasValidClientBooking = clientBookings.some(b => b.providerId === activePartnerId && ['paid', 'completed'].includes(b.status));
-          const hasValidProviderBooking = providerBookings.some(b => b.clientId === activePartnerId && ['paid', 'completed'].includes(b.status));
-          setCanMessage(hasValidClientBooking || hasValidProviderBooking);
-        } catch (e) {
-          console.error(e);
-          setCanMessage(false);
-        }
-      };
-      checkSimulated();
-    }
-
-    return () => unsub();
-  }, [activePartnerId, currentUserProfile]);
+    setCanMessage(activeConv?.status === 'unlocked');
+  }, [activePartnerId, currentUserProfile, activeConv]);
 
   if (!currentUserProfile) {
     return (

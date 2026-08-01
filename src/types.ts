@@ -61,6 +61,7 @@ export interface Conversation {
   participantProfiles?: { [uid: string]: Partial<UserProfile> };
   lastMessage?: string;
   lastMessageAt?: any;
+  status?: 'locked' | 'unlocked';
 }
 
 export interface Message {
