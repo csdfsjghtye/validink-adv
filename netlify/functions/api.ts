@@ -2,34 +2,61 @@ import express from 'express';
 import serverless from 'serverless-http';
 
 const app = express();
+
+// CORS Middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(express.json());
 
 const router = express.Router();
 
-router.get('/paymongo/status', (req, res) => {
+// 1. PayMongo Configuration Status
+router.all('/paymongo/status', (req, res) => {
   const secretKey = process.env.PAYMONGO_SECRET_KEY;
+  const publicKey = process.env.PAYMONGO_PUBLIC_KEY;
   res.json({
     configured: !!secretKey,
+    hasPublicKey: !!publicKey,
     message: secretKey
       ? 'PayMongo is fully configured with active Secret Key.'
-      : 'PayMongo Secret Key (PAYMONGO_SECRET_KEY) is missing. Please add it in Netlify environment variables.'
+      : 'PayMongo Secret Key (PAYMONGO_SECRET_KEY) is missing. Please set PAYMONGO_SECRET_KEY in Netlify Environment Variables.'
   });
 });
 
-router.post('/paymongo/create-checkout', async (req, res) => {
+// 2. Create Hosted Checkout Session
+router.all('/paymongo/create-checkout', async (req, res) => {
   const secretKey = process.env.PAYMONGO_SECRET_KEY;
   if (!secretKey) {
     return res.status(400).json({
       success: false,
       configured: false,
-      error: 'PAYMONGO_SECRET_KEY is missing. Please add PAYMONGO_SECRET_KEY in Netlify environment variables.'
+      error: 'PAYMONGO_SECRET_KEY is missing. Please add PAYMONGO_SECRET_KEY in Netlify Environment Variables.'
     });
   }
 
-  const { amount, description, name, bookingId } = req.body;
+  const amount = req.body?.amount || req.query?.amount;
+  const description = req.body?.description || req.query?.description;
+  const name = req.body?.name || req.query?.name;
+  const bookingId = req.body?.bookingId || req.query?.bookingId;
+
+  if (req.method === 'GET' && !amount) {
+    return res.json({
+      success: false,
+      message: 'PayMongo create-checkout endpoint is active. To create a checkout session, send a POST request with amount, description, name, and bookingId.'
+    });
+  }
+
   const amountInCents = Math.round((Number(amount) || 5) * 100);
 
-  const origin = req.headers.origin || `https://${req.headers.host}`;
+  const origin = req.headers.origin || (req.headers.host ? `https://${req.headers.host}` : 'https://claudeink.netlify.app');
 
   const successUrl = bookingId
     ? `${origin}/?payment=success&bookingId=${bookingId}&session_id={CHECKOUT_SESSION_ID}`
@@ -102,22 +129,25 @@ router.post('/paymongo/create-checkout', async (req, res) => {
   }
 });
 
-router.post('/paymongo/verify-checkout-session', async (req, res) => {
+// 3. Verify Checkout Session
+router.all('/paymongo/verify-checkout-session', async (req, res) => {
   const secretKey = process.env.PAYMONGO_SECRET_KEY;
   if (!secretKey) {
     return res.status(400).json({
       success: false,
       verified: false,
-      error: 'PAYMONGO_SECRET_KEY is missing. Cannot verify payment with PayMongo.'
+      error: 'PAYMONGO_SECRET_KEY is missing in environment variables.'
     });
   }
 
-  const { sessionId, bookingId } = req.body;
+  const sessionId = req.body?.sessionId || req.query?.sessionId || req.query?.session_id;
+  const bookingId = req.body?.bookingId || req.query?.bookingId;
+
   if (!sessionId) {
     return res.status(400).json({
       success: false,
       verified: false,
-      error: 'sessionId is required for payment verification.'
+      error: 'sessionId is required. Please send a POST request with JSON { "sessionId": "cs_..." } or GET request with ?sessionId=cs_...'
     });
   }
 
@@ -179,17 +209,19 @@ router.post('/paymongo/verify-checkout-session', async (req, res) => {
   }
 });
 
-router.post('/paymongo/create-payment-intent', async (req, res) => {
+// 4. Create Payment Intent
+router.all('/paymongo/create-payment-intent', async (req, res) => {
   const secretKey = process.env.PAYMONGO_SECRET_KEY;
   if (!secretKey) {
     return res.status(400).json({
       success: false,
       configured: false,
-      error: 'PAYMONGO_SECRET_KEY is missing. Please set PAYMONGO_SECRET_KEY in Netlify environment variables.'
+      error: 'PAYMONGO_SECRET_KEY is missing. Please set PAYMONGO_SECRET_KEY in Netlify Environment Variables.'
     });
   }
 
-  const { amount, description } = req.body;
+  const amount = req.body?.amount || req.query?.amount;
+  const description = req.body?.description || req.query?.description;
   const amountInCents = Math.round((Number(amount) || 5) * 100);
 
   try {
@@ -242,5 +274,7 @@ router.post('/paymongo/create-payment-intent', async (req, res) => {
 
 app.use('/api', router);
 app.use('/.netlify/functions/api', router);
+app.use('/', router);
 
 export const handler = serverless(app);
+

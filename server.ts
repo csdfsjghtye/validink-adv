@@ -6,10 +6,21 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // CORS Middleware
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
   app.use(express.json());
 
   // API route: Check PayMongo Configuration Status
-  app.get('/api/paymongo/status', (req, res) => {
+  app.all('/api/paymongo/status', (req, res) => {
     const hasSecret = !!process.env.PAYMONGO_SECRET_KEY;
     const hasPublic = !!process.env.PAYMONGO_PUBLIC_KEY;
     res.json({
@@ -22,7 +33,7 @@ async function startServer() {
   });
 
   // API route: Create PayMongo Hosted Checkout Session (GCash, Maya, Card, QRPH)
-  app.post('/api/paymongo/create-checkout', async (req, res) => {
+  app.all('/api/paymongo/create-checkout', async (req, res) => {
     const secretKey = process.env.PAYMONGO_SECRET_KEY;
 
     if (!secretKey) {
@@ -33,8 +44,18 @@ async function startServer() {
       });
     }
 
-    const { amount, description, name, bookingId } = req.body;
-    // PayMongo amounts are in cents (e.g. 500 PHP = 50000 cents)
+    const amount = req.body?.amount || req.query?.amount;
+    const description = req.body?.description || req.query?.description;
+    const name = req.body?.name || req.query?.name;
+    const bookingId = req.body?.bookingId || req.query?.bookingId;
+
+    if (req.method === 'GET' && !amount) {
+      return res.json({
+        success: false,
+        message: 'PayMongo create-checkout endpoint is active. Send a POST request with amount, description, name, and bookingId to initiate checkout.'
+      });
+    }
+
     const amountInCents = Math.round((Number(amount) || 5) * 100);
 
     const origin = req.headers.origin || `${req.protocol}://${req.get('host')}`;
@@ -110,7 +131,7 @@ async function startServer() {
   });
 
   // API route: Verify PayMongo Checkout Session status
-  app.post('/api/paymongo/verify-checkout-session', async (req, res) => {
+  app.all('/api/paymongo/verify-checkout-session', async (req, res) => {
     const secretKey = process.env.PAYMONGO_SECRET_KEY;
 
     if (!secretKey) {
@@ -121,13 +142,14 @@ async function startServer() {
       });
     }
 
-    const { sessionId, bookingId } = req.body;
+    const sessionId = req.body?.sessionId || req.query?.sessionId || req.query?.session_id;
+    const bookingId = req.body?.bookingId || req.query?.bookingId;
 
     if (!sessionId) {
       return res.status(400).json({
         success: false,
         verified: false,
-        error: 'sessionId is required for payment verification.'
+        error: 'sessionId is required. Send a POST request with JSON { "sessionId": "cs_..." } or GET request with ?sessionId=cs_...'
       });
     }
 
@@ -192,7 +214,7 @@ async function startServer() {
   });
 
   // API route: Create PayMongo Payment Intent for direct API authorization
-  app.post('/api/paymongo/create-payment-intent', async (req, res) => {
+  app.all('/api/paymongo/create-payment-intent', async (req, res) => {
     const secretKey = process.env.PAYMONGO_SECRET_KEY;
 
     if (!secretKey) {
@@ -203,7 +225,8 @@ async function startServer() {
       });
     }
 
-    const { amount, description } = req.body;
+    const amount = req.body?.amount || req.query?.amount;
+    const description = req.body?.description || req.query?.description;
     const amountInCents = Math.round((Number(amount) || 5) * 100);
 
     try {
