@@ -111,22 +111,9 @@ export default function Messages({
       return;
     }
 
-    const q = query(
-      collection(db, 'conversations', activeConvId, 'messages'),
-      orderBy('createdAt', 'asc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Message[];
+    const unsubscribe = dbService.listenMessages(activeConvId, (msgs) => {
       setMessages(msgs);
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-    }, (err) => {
-      console.error("Snapshot messages error", err);
-      // Fallback
-      setMessages([]);
     });
 
     return () => unsubscribe();
@@ -142,30 +129,7 @@ export default function Messages({
     setInputText('');
 
     try {
-      // 1. Add Message Doc
-      await addDoc(collection(db, 'conversations', activeConvId, 'messages'), {
-        senderId: currentUserProfile.uid,
-        text: cleanText,
-        createdAt: Timestamp.now()
-      });
-
-      // 2. Update Conversation Summary
-      const convRef = doc(db, 'conversations', activeConvId);
-      await updateDoc(convRef, {
-        lastMessage: cleanText,
-        lastMessageAt: Timestamp.now()
-      });
-
-      // 3. Create Notification for the recipient
-      const parts = activeConvId.split('_');
-      const recipientId = parts.find(id => id !== currentUserProfile.uid);
-      if (recipientId) {
-        await dbService.createNotification(recipientId, 'new_message', {
-          conversationId: activeConvId,
-          senderId: currentUserProfile.uid,
-          senderName: currentUserProfile.displayName
-        });
-      }
+      await dbService.sendMessage(activeConvId, currentUserProfile.uid, cleanText);
     } catch (err) {
       console.error("Error sending message", err);
     } finally {
@@ -198,21 +162,13 @@ export default function Messages({
           return;
         }
         
-        const q1 = query(
-          collection(db, 'bookings'),
-          where('clientUid', '==', currentUserProfile.uid),
-          where('providerUid', '==', activePartnerId),
-          where('status', 'in', ['paid', 'completed'])
-        );
-        const q2 = query(
-          collection(db, 'bookings'),
-          where('providerUid', '==', currentUserProfile.uid),
-          where('clientUid', '==', activePartnerId),
-          where('status', 'in', ['paid', 'completed'])
-        );
+        const clientBookings = await dbService.getBookings(currentUserProfile.uid, false);
+        const providerBookings = await dbService.getBookings(currentUserProfile.uid, true);
+
+        const hasValidClientBooking = clientBookings.some(b => b.providerId === activePartnerId && ['paid', 'completed'].includes(b.status));
+        const hasValidProviderBooking = providerBookings.some(b => b.clientId === activePartnerId && ['paid', 'completed'].includes(b.status));
         
-        const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-        if (!snap1.empty || !snap2.empty) {
+        if (hasValidClientBooking || hasValidProviderBooking) {
           setCanMessage(true);
         } else {
           setCanMessage(false);
@@ -223,6 +179,13 @@ export default function Messages({
       }
     };
     checkAuth();
+
+    // Poll to detect payment success while waiting
+    const interval = setInterval(() => {
+      checkAuth();
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, [activePartnerId, currentUserProfile]);
 
   if (!currentUserProfile) {
