@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, CreditCard, Lock, CheckCircle2, ExternalLink, ShieldCheck, AlertCircle, RefreshCw } from 'lucide-react';
+import { dbService } from '../firebase';
 
 interface PaymongoModalProps {
   isOpen: boolean;
