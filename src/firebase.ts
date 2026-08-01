@@ -1070,6 +1070,12 @@ export const dbService = {
     }
   },
 
+  updateBookingSessionId: async (bookingId: string, sessionId: string): Promise<void> => {
+    if (useRealFirebase && db) {
+      const bookingRef = doc(db, 'bookings', bookingId);
+      await updateDoc(bookingRef, { paymongoSessionId: sessionId });
+    }
+  },
   updateBookingStatus: async (bookingId: string, newStatus: 'accepted' | 'declined' | 'completed' | 'cancelled' | 'paid'): Promise<void> => {
     if (useRealFirebase && db) {
       await runTransaction(db, async (transaction) => {

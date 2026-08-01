@@ -197,14 +197,23 @@ export default function App() {
       const verifyAndCompletePayment = async () => {
         setPaymentVerifying(true);
         try {
-          if (!sessionId) {
+          let targetSessionId = sessionId;
+          if (!targetSessionId) {
+            // Retrieve session ID from Firestore booking document
+            const bookingDoc = await getDoc(doc(db, 'bookings', bookingId));
+            if (bookingDoc.exists()) {
+              targetSessionId = bookingDoc.data().paymongoSessionId;
+            }
+          }
+          
+          if (!targetSessionId) {
             throw new Error('Missing PayMongo session ID for payment verification.');
           }
 
           const res = await fetch('/api/paymongo/verify-checkout-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId, bookingId })
+            body: JSON.stringify({ sessionId: targetSessionId, bookingId })
           });
 
           const data = await res.json();

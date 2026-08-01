@@ -113,27 +113,7 @@ export default function Profile({
     if (!currentUserProfile || !profileId || currentUserProfile.uid === profileId) return;
 
     if (currentUserProfile.role === 'professor') {
-      // Professors can be messaged, but wait, the rule says "Students cannot message professor unless payment has been done".
-      // What about a professor messaging a student? Let's just require a paid booking between the two in any direction.
-      const checkBookings = async () => {
-        try {
-          if (!isRealFirebaseActive() || !db) {
-            setHasPaidBooking(true);
-            return;
-          }
-          const q = query(
-            collection(db, 'bookings'),
-            where('providerUid', '==', currentUserProfile.uid),
-            where('clientUid', '==', profileId),
-            where('status', 'in', ['paid', 'completed'])
-          );
-          const snapshot = await getDocs(q);
-          setHasPaidBooking(!snapshot.empty);
-        } catch (e) {
-          console.error(e);
-        }
-      };
-      checkBookings();
+      setHasPaidBooking(true);
     } else {
       const checkBookings = async () => {
         try {

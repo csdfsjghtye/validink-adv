@@ -193,6 +193,11 @@ export default function Messages({
 
     const checkAuth = async () => {
       try {
+        if (currentUserProfile.role === 'professor') {
+          setCanMessage(true);
+          return;
+        }
+        
         const q1 = query(
           collection(db, 'bookings'),
           where('clientUid', '==', currentUserProfile.uid),

@@ -74,7 +74,7 @@ export default function Sidebar({
         </nav>
 
         {/* Publish Action Button */}
-        {user?.role === 'professor' && (
+        {user?.role === 'professor' && (currentTab === 'home' || currentTab === 'explore') && (
           <button
             id="btn-sidebar-publish"
             onClick={onOpenCompose}

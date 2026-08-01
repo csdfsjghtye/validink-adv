@@ -59,6 +59,13 @@ export default function PaymongoModal({ isOpen, onClose, onSuccess, amount, reci
       const data = await res.json();
 
       if (data.success && data.checkoutUrl) {
+        if (bookingId && data.sessionId) {
+          try {
+            await dbService.updateBookingSessionId(bookingId, data.sessionId);
+          } catch (e) {
+            console.error('Failed to save session ID:', e);
+          }
+        }
         // Redirect to PayMongo Hosted Checkout Page
         window.location.href = data.checkoutUrl;
       } else if (data.error) {
@@ -71,28 +78,6 @@ export default function PaymongoModal({ isOpen, onClose, onSuccess, amount, reci
     } catch (err: any) {
       setError(err.message || 'An error occurred connecting to PayMongo.');
       setLoading(false);
-    }
-  };
-
-  const handleSimulateOrBypass = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (bookingId) {
-        // Optimistic check, will throw in dbService if status is not 'accepted'
-        await onSuccess();
-        setLoading(false);
-        setSuccess(true);
-        setTimeout(() => {
-          onClose();
-          setSuccess(false);
-        }, 1200);
-      } else {
-        throw new Error("No booking ID provided for payment simulation.");
-      }
-    } catch (err: any) {
-      setLoading(false);
-      setError(err.message || 'Payment simulation failed.');
     }
   };
 
@@ -176,17 +161,6 @@ export default function PaymongoModal({ isOpen, onClose, onSuccess, amount, reci
                     </>
                   )}
                 </button>
-
-                {!status?.configured && (
-                  <button
-                    type="button"
-                    onClick={handleSimulateOrBypass}
-                    disabled={loading}
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5 border border-gray-300"
-                  >
-                    Authorize Test Payment (Dev Preview Mode)
-                  </button>
-                )}
               </form>
 
               <div className="mt-2 pt-3 border-t border-gray-100 text-center">

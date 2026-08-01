@@ -362,7 +362,7 @@ export default function Feed({
 
         {/* Categories Pills Row (Only visible for Validation Offerings) */}
         {activeFeedTab === 'offerings' && (
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2 border-b border-transparent">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2 border-b border-transparent pr-4">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}

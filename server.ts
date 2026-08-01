@@ -39,8 +39,8 @@ async function startServer() {
 
     const origin = req.headers.origin || `${req.protocol}://${req.get('host')}`;
     const successUrl = bookingId
-      ? `${origin}/?payment=success&bookingId=${bookingId}&session_id={CHECKOUT_SESSION_ID}`
-      : `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`;
+      ? `${origin}/?payment=success&bookingId=${bookingId}`
+      : `${origin}/?payment=success`;
     const cancelUrl = bookingId
       ? `${origin}/?payment=cancel&bookingId=${bookingId}`
       : `${origin}/?payment=cancel`;
