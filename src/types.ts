@@ -76,6 +76,7 @@ export interface Booking {
   clientId: string;
   providerId: string;
   status: 'pending' | 'accepted' | 'paid' | 'declined' | 'completed' | 'cancelled';
+  paymongoSessionId?: string;
   createdAt: any;
   updatedAt: any;
   serviceTitle?: string;

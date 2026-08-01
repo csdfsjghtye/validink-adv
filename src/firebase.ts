@@ -1074,6 +1074,13 @@ export const dbService = {
     if (useRealFirebase && db) {
       const bookingRef = doc(db, 'bookings', bookingId);
       await updateDoc(bookingRef, { paymongoSessionId: sessionId });
+    } else {
+      const bookings = getLocalJSON<Booking[]>(MOCK_BOOKINGS_KEY, []);
+      const bIndex = bookings.findIndex(b => b.id === bookingId);
+      if (bIndex !== -1) {
+        bookings[bIndex].paymongoSessionId = sessionId;
+        setLocalJSON(MOCK_BOOKINGS_KEY, bookings);
+      }
     }
   },
   updateBookingStatus: async (bookingId: string, newStatus: 'accepted' | 'declined' | 'completed' | 'cancelled' | 'paid'): Promise<void> => {
